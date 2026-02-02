@@ -1,0 +1,613 @@
+{
+  "name": "banana-studio",
+  "displayName": "Banana Studio - AI Image Generation & Editing",
+  "description": "Generate, edit, and analyze images using Gemini AI models directly in VS Code. Features: text-to-image, AI editing, object detection, OCR, sensitive data blur.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Anass Kartit",
+    "url": "https://kartit.net"
+  },
+  "publisher": "anasskartit",
+  "license": "MIT",
+  "homepage": "https://github.com/AnassKartit/banana-studio-vscode#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AnassKartit/banana-studio-vscode.git"
+  },
+  "bugs": {
+    "url": "https://github.com/AnassKartit/banana-studio-vscode/issues"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Machine Learning",
+    "Visualization",
+    "Other"
+  ],
+  "keywords": [
+    "ai",
+    "image",
+    "gemini",
+    "generation",
+    "editing",
+    "ocr",
+    "blur",
+    "privacy",
+    "banana"
+  ],
+  "galleryBanner": {
+    "color": "#FFD700",
+    "theme": "light"
+  },
+  "activationEvents": [
+    "onStartupFinished",
+    "onCommand:nanoBanana.generateImage",
+    "onCommand:nanoBanana.editImage",
+    "onCommand:nanoBanana.editImageFromExplorer",
+    "onCommand:nanoBanana.quickEdit",
+    "onCommand:nanoBanana.analyzeImage",
+    "onCommand:nanoBanana.autoBlurSensitive",
+    "onCommand:nanoBanana.setApiKey",
+    "onCommand:nanoBanana.describeImage",
+    "onCommand:nanoBanana.detectObjects",
+    "onCommand:nanoBanana.detectSensitiveData",
+    "onCommand:nanoBanana.extractText",
+    "onCommand:nanoBanana.composeImages",
+    "onWebviewPanel:nanoBananaPreview",
+    "onWebviewPanel:nanoBananaResult",
+    "onWebviewPanel:nanoBananaDetection"
+  ],
+  "main": "./out/extension.js",
+  "icon": "images/icon.png",
+  "contributes": {
+    "configuration": {
+      "title": "Nano Banana",
+      "properties": {
+        "nanoBanana.defaultModel": {
+          "type": "string",
+          "default": "gemini-2.5-flash-image",
+          "enum": [
+            "gemini-2.5-flash-image",
+            "gemini-3-pro-image-preview"
+          ],
+          "enumDescriptions": [
+            "Nano Banana (Flash) - Fast and efficient for high-volume tasks",
+            "Nano Banana Pro - Professional quality with advanced reasoning"
+          ],
+          "description": "Default AI model for image generation"
+        },
+        "nanoBanana.understandingModel": {
+          "type": "string",
+          "default": "gemini-3-flash-preview",
+          "enum": [
+            "gemini-3-flash-preview",
+            "gemini-3-pro-preview",
+            "gemini-2.5-flash-preview-05-20"
+          ],
+          "description": "Model for image understanding, analysis, and detection"
+        },
+        "nanoBanana.defaultAspectRatio": {
+          "type": "string",
+          "default": "1:1",
+          "enum": [
+            "1:1",
+            "2:3",
+            "3:2",
+            "3:4",
+            "4:3",
+            "4:5",
+            "5:4",
+            "9:16",
+            "16:9",
+            "21:9"
+          ],
+          "description": "Default aspect ratio for generated images"
+        },
+        "nanoBanana.defaultResolution": {
+          "type": "string",
+          "default": "1K",
+          "enum": [
+            "1K",
+            "2K",
+            "4K"
+          ],
+          "description": "Default resolution for generated images"
+        },
+        "nanoBanana.enableGoogleSearch": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable Google Search grounding (Pro model only)"
+        },
+        "nanoBanana.quickPrompts": {
+          "type": "array",
+          "default": [
+            {
+              "label": "Make Vintage",
+              "prompt": "Apply a vintage film effect with warm tones and slight grain",
+              "category": "style"
+            },
+            {
+              "label": "Add Sunset",
+              "prompt": "Add a beautiful sunset sky in the background",
+              "category": "edit"
+            },
+            {
+              "label": "Remove Background",
+              "prompt": "Remove the background and make it transparent or white",
+              "category": "edit"
+            },
+            {
+              "label": "Enhance Quality",
+              "prompt": "Enhance the image quality, improve sharpness and colors",
+              "category": "enhance"
+            },
+            {
+              "label": "Make Professional",
+              "prompt": "Make this image look more professional and polished",
+              "category": "enhance"
+            },
+            {
+              "label": "Add Blur Background",
+              "prompt": "Add a professional bokeh blur to the background",
+              "category": "style"
+            }
+          ],
+          "items": {
+            "type": "object",
+            "properties": {
+              "label": {
+                "type": "string",
+                "description": "Display name for the quick prompt"
+              },
+              "prompt": {
+                "type": "string",
+                "description": "The actual prompt to send to the AI"
+              },
+              "category": {
+                "type": "string",
+                "enum": [
+                  "style",
+                  "edit",
+                  "enhance",
+                  "analyze",
+                  "custom"
+                ],
+                "description": "Category for organizing prompts"
+              }
+            },
+            "required": [
+              "label",
+              "prompt"
+            ]
+          },
+          "description": "Custom quick prompts for image editing"
+        },
+        "nanoBanana.sensitiveDataTypes": {
+          "type": "array",
+          "default": [
+            "faces",
+            "license plates",
+            "credit card numbers",
+            "social security numbers",
+            "email addresses",
+            "phone numbers",
+            "addresses",
+            "signatures",
+            "ID cards",
+            "passports",
+            "medical information",
+            "bank account numbers"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "description": "Types of sensitive data to detect and optionally blur"
+        },
+        "nanoBanana.blurIntensity": {
+          "type": "number",
+          "default": 25,
+          "minimum": 5,
+          "maximum": 100,
+          "description": "Blur intensity for sensitive data (higher = more blur)"
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "nanoBanana.generateImage",
+        "title": "Generate New Image",
+        "category": "Nano Banana",
+        "icon": "$(add)"
+      },
+      {
+        "command": "nanoBanana.editImage",
+        "title": "Edit Image with AI",
+        "category": "Nano Banana",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "nanoBanana.generateImageInFolder",
+        "title": "Generate New Image Here",
+        "category": "Nano Banana"
+      },
+      {
+        "command": "nanoBanana.editImageFromExplorer",
+        "title": "Edit Image with AI",
+        "category": "Nano Banana"
+      },
+      {
+        "command": "nanoBanana.composeImages",
+        "title": "Compose Multiple Images",
+        "category": "Nano Banana"
+      },
+      {
+        "command": "nanoBanana.openPreview",
+        "title": "Open Image Preview",
+        "category": "Nano Banana"
+      },
+      {
+        "command": "nanoBanana.selectModel",
+        "title": "Select AI Model (Generation)",
+        "category": "Nano Banana"
+      },
+      {
+        "command": "nanoBanana.selectUnderstandingModel",
+        "title": "Select AI Model (Understanding)",
+        "category": "Nano Banana"
+      },
+      {
+        "command": "nanoBanana.setAspectRatio",
+        "title": "Set Aspect Ratio",
+        "category": "Nano Banana"
+      },
+      {
+        "command": "nanoBanana.setResolution",
+        "title": "Set Resolution",
+        "category": "Nano Banana"
+      },
+      {
+        "command": "nanoBanana.setApiKey",
+        "title": "Set API Key",
+        "category": "Nano Banana",
+        "icon": "$(key)"
+      },
+      {
+        "command": "nanoBanana.checkApiKey",
+        "title": "Check API Key Status",
+        "category": "Nano Banana",
+        "icon": "$(info)"
+      },
+      {
+        "command": "nanoBanana.quickEdit",
+        "title": "Quick Edit with Preset",
+        "category": "Nano Banana"
+      },
+      {
+        "command": "nanoBanana.analyzeImage",
+        "title": "Analyze Image",
+        "category": "Nano Banana",
+        "icon": "$(search)"
+      },
+      {
+        "command": "nanoBanana.describeImage",
+        "title": "Describe Image",
+        "category": "Nano Banana"
+      },
+      {
+        "command": "nanoBanana.detectObjects",
+        "title": "Detect Objects",
+        "category": "Nano Banana"
+      },
+      {
+        "command": "nanoBanana.detectSensitiveData",
+        "title": "Detect Sensitive Data",
+        "category": "Nano Banana",
+        "icon": "$(shield)"
+      },
+      {
+        "command": "nanoBanana.autoBlurSensitive",
+        "title": "Auto-Blur Sensitive Data",
+        "category": "Nano Banana",
+        "icon": "$(eye-closed)"
+      },
+      {
+        "command": "nanoBanana.improveDetection",
+        "title": "Improve Detection (Feedback)",
+        "category": "Nano Banana",
+        "icon": "$(feedback)"
+      },
+      {
+        "command": "nanoBanana.resetDetectionPrompt",
+        "title": "Reset Detection Prompt",
+        "category": "Nano Banana",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "nanoBanana.restoreBackup",
+        "title": "Restore from Backup",
+        "category": "Nano Banana",
+        "icon": "$(history)"
+      },
+      {
+        "command": "nanoBanana.segmentObjects",
+        "title": "Segment Objects",
+        "category": "Nano Banana"
+      },
+      {
+        "command": "nanoBanana.extractText",
+        "title": "Extract Text (OCR)",
+        "category": "Nano Banana"
+      },
+      {
+        "command": "nanoBanana.manageQuickPrompts",
+        "title": "Manage Quick Prompts",
+        "category": "Nano Banana"
+      },
+      {
+        "command": "nanoBanana.askAboutImage",
+        "title": "Ask About Image",
+        "category": "Nano Banana"
+      }
+    ],
+    "submenus": [
+      {
+        "id": "nanoBanana.submenu",
+        "label": "🍌 Banana Studio"
+      }
+    ],
+    "menus": {
+      "nanoBanana.submenu": [
+        {
+          "command": "nanoBanana.generateImageInFolder",
+          "group": "0_generate@1",
+          "when": "explorerResourceIsFolder"
+        },
+        {
+          "command": "nanoBanana.editImageFromExplorer",
+          "group": "1_edit@1",
+          "when": "!explorerResourceIsFolder"
+        },
+        {
+          "command": "nanoBanana.quickEdit",
+          "group": "1_edit@2",
+          "when": "!explorerResourceIsFolder"
+        },
+        {
+          "command": "nanoBanana.composeImages",
+          "group": "1_edit@3",
+          "when": "!explorerResourceIsFolder"
+        },
+        {
+          "command": "nanoBanana.describeImage",
+          "group": "2_analyze@1",
+          "when": "!explorerResourceIsFolder"
+        },
+        {
+          "command": "nanoBanana.askAboutImage",
+          "group": "2_analyze@2",
+          "when": "!explorerResourceIsFolder"
+        },
+        {
+          "command": "nanoBanana.detectObjects",
+          "group": "2_analyze@3",
+          "when": "!explorerResourceIsFolder"
+        },
+        {
+          "command": "nanoBanana.extractText",
+          "group": "2_analyze@4",
+          "when": "!explorerResourceIsFolder"
+        },
+        {
+          "command": "nanoBanana.detectSensitiveData",
+          "group": "3_privacy@1",
+          "when": "!explorerResourceIsFolder"
+        },
+        {
+          "command": "nanoBanana.autoBlurSensitive",
+          "group": "3_privacy@2",
+          "when": "!explorerResourceIsFolder"
+        },
+        {
+          "command": "nanoBanana.improveDetection",
+          "group": "3_privacy@3",
+          "when": "!explorerResourceIsFolder"
+        },
+        {
+          "command": "nanoBanana.openPreview",
+          "group": "4_view@1",
+          "when": "!explorerResourceIsFolder"
+        }
+      ],
+      "explorer/context": [
+        {
+          "when": "resourceExtname =~ /\\.(png|jpg|jpeg|gif|webp|bmp)$/i",
+          "submenu": "nanoBanana.submenu",
+          "group": "navigation@99"
+        },
+        {
+          "when": "resourceFilename =~ /_backup\\.(png|jpg|jpeg|gif|webp|bmp)$/i",
+          "command": "nanoBanana.restoreBackup",
+          "group": "navigation@100"
+        },
+        {
+          "when": "explorerResourceIsFolder",
+          "submenu": "nanoBanana.submenu",
+          "group": "navigation@99"
+        }
+      ],
+      "editor/context": [
+        {
+          "when": "resourceExtname =~ /\\.(png|jpg|jpeg|gif|webp|bmp)$/i",
+          "submenu": "nanoBanana.submenu",
+          "group": "navigation@99"
+        }
+      ],
+      "editor/title": [
+        {
+          "when": "resourceExtname =~ /\\.(png|jpg|jpeg|gif|webp|bmp)$/i",
+          "command": "nanoBanana.editImage",
+          "group": "navigation@1"
+        },
+        {
+          "when": "resourceExtname =~ /\\.(png|jpg|jpeg|gif|webp|bmp)$/i",
+          "command": "nanoBanana.analyzeImage",
+          "group": "navigation@2"
+        },
+        {
+          "when": "resourceExtname =~ /\\.(png|jpg|jpeg|gif|webp|bmp)$/i",
+          "command": "nanoBanana.autoBlurSensitive",
+          "group": "navigation@3"
+        }
+      ],
+      "editor/title/context": [
+        {
+          "when": "resourceExtname =~ /\\.(png|jpg|jpeg|gif|webp|bmp)$/i",
+          "submenu": "nanoBanana.submenu",
+          "group": "navigation@99"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "nanoBanana.generateImage"
+        },
+        {
+          "command": "nanoBanana.editImage"
+        },
+        {
+          "command": "nanoBanana.editImageFromExplorer"
+        },
+        {
+          "command": "nanoBanana.quickEdit"
+        },
+        {
+          "command": "nanoBanana.analyzeImage"
+        },
+        {
+          "command": "nanoBanana.describeImage"
+        },
+        {
+          "command": "nanoBanana.askAboutImage"
+        },
+        {
+          "command": "nanoBanana.detectObjects"
+        },
+        {
+          "command": "nanoBanana.segmentObjects"
+        },
+        {
+          "command": "nanoBanana.extractText"
+        },
+        {
+          "command": "nanoBanana.detectSensitiveData"
+        },
+        {
+          "command": "nanoBanana.autoBlurSensitive"
+        },
+        {
+          "command": "nanoBanana.composeImages"
+        },
+        {
+          "command": "nanoBanana.selectModel"
+        },
+        {
+          "command": "nanoBanana.selectUnderstandingModel"
+        },
+        {
+          "command": "nanoBanana.setAspectRatio"
+        },
+        {
+          "command": "nanoBanana.setResolution"
+        },
+        {
+          "command": "nanoBanana.manageQuickPrompts"
+        },
+        {
+          "command": "nanoBanana.setApiKey"
+        }
+      ]
+    },
+    "customEditors": [
+      {
+        "viewType": "bananaStudio.imagePreview",
+        "displayName": "Banana Studio Image Editor",
+        "selector": [
+          {
+            "filenamePattern": "*.png"
+          },
+          {
+            "filenamePattern": "*.jpg"
+          },
+          {
+            "filenamePattern": "*.jpeg"
+          },
+          {
+            "filenamePattern": "*.gif"
+          },
+          {
+            "filenamePattern": "*.webp"
+          },
+          {
+            "filenamePattern": "*.bmp"
+          }
+        ],
+        "priority": "option"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "nanoBanana.generateImage",
+        "key": "ctrl+shift+g",
+        "mac": "cmd+shift+g"
+      },
+      {
+        "command": "nanoBanana.editImage",
+        "key": "ctrl+shift+e",
+        "mac": "cmd+shift+e",
+        "when": "resourceExtname =~ /\\.(png|jpg|jpeg|gif|webp|bmp)$/i"
+      },
+      {
+        "command": "nanoBanana.quickEdit",
+        "key": "ctrl+shift+q",
+        "mac": "cmd+shift+q",
+        "when": "resourceExtname =~ /\\.(png|jpg|jpeg|gif|webp|bmp)$/i"
+      },
+      {
+        "command": "nanoBanana.analyzeImage",
+        "key": "ctrl+shift+a",
+        "mac": "cmd+shift+a",
+        "when": "resourceExtname =~ /\\.(png|jpg|jpeg|gif|webp|bmp)$/i"
+      },
+      {
+        "command": "nanoBanana.autoBlurSensitive",
+        "key": "ctrl+shift+b",
+        "mac": "cmd+shift+b",
+        "when": "resourceExtname =~ /\\.(png|jpg|jpeg|gif|webp|bmp)$/i"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run bundle",
+    "compile": "tsc -p ./",
+    "bundle": "esbuild src/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --platform=node --minify",
+    "watch": "tsc -watch -p ./",
+    "lint": "eslint src --ext ts",
+    "package": "vsce package --no-dependencies",
+    "install-ext": "code --install-extension banana-studio-1.0.0.vsix --force",
+    "dev": "npm run bundle && npm run package && code --install-extension banana-studio-1.0.0.vsix --force && echo '✅ Installed! Reload VS Code to activate.'",
+    "update-ext": "npm run dev"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@types/vscode": "^1.85.0",
+    "@typescript-eslint/eslint-plugin": "^6.13.0",
+    "@typescript-eslint/parser": "^6.13.0",
+    "esbuild": "^0.27.2",
+    "eslint": "^8.54.0",
+    "typescript": "^5.3.2"
+  },
+  "dependencies": {
+    "@google/genai": "^1.39.0",
+    "jimp": "^1.6.0"
+  }
+}
